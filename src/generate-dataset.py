@@ -4,6 +4,10 @@ import numpy as np
 from datetime import datetime, timedelta
 from keras.preprocessing import image
 from tensorflow.keras.models import load_model
+import logging
+
+# Logger -------------------------------------------------------------------------------------------
+logger = logging.getLogger(__name__)
 
 # BGR COLORS ---------------------------------------------------------------------------------------
 log_clr_text = (255, 255, 255)
@@ -39,7 +43,7 @@ display_threshold = False  # display threshold mask over ROI
 model_path = None  # trained model to load (latest if None)
 # model_path = 'models/rps_v01_56ep_0.9641acc_0.1089loss.h5'  # trained model to load (latest if None)
 class_indices = {'paper': 0, 'rock': 1, 'scissors': 2}  # training parameters
-class_labels = {v:k for k, v in class_indices.items()}
+class_labels = {v: k for k, v in class_indices.items()}
 class_img = {k: f"icons/{k}.png" for k in class_indices}
 prediction_img_size = 50, 50  # litthe RPS thumbnail added to ROI corner
 model_input_size = 150, 150
@@ -89,7 +93,8 @@ try:
     with open(settings_path, "r") as f:
         roi_x, roi_y, roi_w, roi_h, threshold_amount = map(int, f.readline().split())
         # reinit ROI if out of bounds
-        if any([roi_x < 0, roi_y < 0, roi_w < 0, roi_h < 0, roi_x + roi_w > capture_width, roi_y + roi_h > capture_height]):
+        if any([roi_x < 0, roi_y < 0, roi_w < 0, roi_h < 0, roi_x + roi_w > capture_width,
+                roi_y + roi_h > capture_height]):
             raise ValueError
 
 except FileNotFoundError or ValueError:
@@ -147,7 +152,74 @@ def mouse_callback(event, mouseX, mouseY, flags, param):
             roi_w -= roi_size_step
             roi_h -= roi_size_step
 
+
 cv2.setMouseCallback(window_name, mouse_callback)
+
+
+def capture_mode(log_str):
+    global img_next_id, f, capture_time_counter, square_color, is_capturing, image_counter, roi_label
+    if image_counter < frames_batch:
+        if datetime.now() - capture_time_counter > timedelta(milliseconds=capture_delay):
+            # assign valid image id and name
+            image_ids = [int(img.replace(img_prefix, "").replace(f".{img_extension}", ""))
+                         for img in os.listdir(img_folder)
+                         if img.startswith(img_prefix) and img.endswith(f".{img_extension}")]
+            if img_next_id in image_ids:
+                # assign next id
+                img_next_id = max(image_ids) + 1
+            filepath = os.path.join(img_folder, f"{img_prefix}{img_next_id}.{img_extension}")
+            # Save the ROI image
+            if use_threshold and display_threshold:
+                cv2.imwrite(filepath, threshold_roi)
+            else:
+                cv2.imwrite(filepath, frame)
+                pass
+
+            capture_window_location = str(roi_x) + "; " + str(roi_y) + "; " + str(roi_x + roi_w) + "; " + str(roi_y+roi_h)
+            logger.debug(f"writing with use_threshold , {capture_window_location}")
+            with open(filepath+".txt", "w") as f:
+                f.write(capture_window_location)
+
+            image_counter += 1
+            capture_time_counter = datetime.now()
+            square_color = roi_clr_saving
+        else:
+            square_color = roi_clr_capturing
+    elif image_counter == frames_batch:
+        # reinit counter for next capture
+        is_capturing = False
+        image_counter = 0
+    roi_label = f'Capturing frame {image_counter} / {frames_batch}'
+    log_str += f" | Batch: {frames_batch} frames - Delay: {capture_delay} ms"
+    return log_str
+
+
+def prediction_mode(log_str):
+    global square_color, roi_resized, predicted_class_label, roi_label, prediction_img
+    square_color = roi_clr_prediction
+    # Convert and resize ROI as used by the keras model
+    roi_predicted = threshold_roi if use_threshold else roi
+    roi_resized = cv2.resize(roi_predicted, model_input_size, interpolation=cv2.INTER_AREA)
+    roi_rgb = cv2.cvtColor(roi_resized, cv2.COLOR_BGR2RGB)
+    roi_normalized = roi_rgb / 255.0
+    roi_expanded = np.expand_dims(roi_normalized, axis=0)
+    # Classify the ROI image
+    prediction_prob = model.predict(roi_expanded, verbose=0)[0]
+    predicted_class_index = np.argmax(prediction_prob)
+    predicted_class_label = class_labels[predicted_class_index]
+    predicted_class_prob = prediction_prob[predicted_class_index]
+    # Display prediction
+    if predicted_class_prob < 0.8:
+        roi_label = 'Undefined'
+    else:
+        roi_label = f'{predicted_class_label} ({predicted_class_prob:.2f})'
+        prediction_img = class_img[predicted_class_label]
+    p_paper, p_rock, p_scissors = (f'{p:.2f}' for p in prediction_prob)
+    log_str += f" | Prediction: Rock {p_rock} - Paper {p_paper} - Scissors {p_scissors}"
+    return log_str
+
+
+logging.basicConfig(filename='generate-dataset.log', level=logging.DEBUG)
 
 # MAIN LOOP ----------------------------------------------------------------------------------------
 while True:
@@ -168,11 +240,11 @@ while True:
     # Flip the frame horizontally
     frame = cv2.flip(frame, 1)
     # Get the ROI
-    roi = frame[roi_y:roi_y+roi_h, roi_x:roi_x+roi_w]
+    roi = frame[roi_y:roi_y + roi_h, roi_x:roi_x + roi_w]
     roi_resized = cv2.resize(roi, model_input_size, interpolation=cv2.INTER_AREA)
     roi_label = ''
     prediction_img = None
-    log_str = f"ROI: {roi_x}, {roi_y}, {roi_x+roi_w}, {roi_y+roi_h} {roi_w}/{roi_h} | Mode: {roi_mode}"
+    log_str = f"ROI: {roi_x}, {roi_y}, {roi_x + roi_w}, {roi_y + roi_h} {roi_w}/{roi_h} | Mode: {roi_mode}"
 
     # Handle Key-Press Events ----------------------------------------------------------------------
     key = cv2.waitKey(1) & 0xFF
@@ -258,66 +330,18 @@ while True:
         threshold_roi[:, :] = np.where(mask > 10, roi, new_bkg)
         # Display threshold mask over ROI
         if display_threshold:
-            frame[roi_y:roi_y+roi_h, roi_x:roi_x+roi_w] = threshold_roi
+            frame[roi_y:roi_y + roi_h, roi_x:roi_x + roi_w] = threshold_roi
         # Add threshold info to log
         log_str += f" | Threshold: On ({'Visible' if display_threshold else 'Hidden'}) - {threshold_amount}"
 
     # Capturing Mode -------------------------------------------------------------------------------
     if is_capturing:
-        if image_counter < frames_batch:
-            if datetime.now() - capture_time_counter > timedelta(milliseconds=capture_delay):
-                # assign valid image id and name
-                image_ids = [int(img.replace(img_prefix, "").replace(f".{img_extension}", ""))
-                             for img in os.listdir(img_folder)
-                             if img.startswith(img_prefix) and img.endswith(f".{img_extension}")]
-                if img_next_id in image_ids:
-                    # assign next id
-                    img_next_id = max(image_ids) + 1
-                filepath = os.path.join(img_folder, f"{img_prefix}{img_next_id}.{img_extension}")
-                # Save the ROI image
-                if use_threshold and display_threshold:
-                    cv2.imwrite(filepath, threshold_roi)
-                else:
-                    cv2.imwrite(filepath, roi)
-                image_counter += 1
-                capture_time_counter = datetime.now()
-                square_color = roi_clr_saving
-            else:
-                square_color = roi_clr_capturing
-        elif image_counter == frames_batch:
-            # reinit counter for next capture
-            is_capturing = False
-            image_counter = 0
-
-        roi_label = f'Capturing frame {image_counter} / {frames_batch}'
-        log_str += f" | Batch: {frames_batch} frames - Delay: {capture_delay} ms"
+        log_str = capture_mode(log_str)
 
     ## Prediction Mode ---------------------------------------------------------------------------------
-    #elif is_predicting:
-    #    square_color = roi_clr_prediction
-    #
-    #    # Convert and resize ROI as used by the keras model
-    #    roi_predicted = threshold_roi if use_threshold else roi
-    #    roi_resized = cv2.resize(roi_predicted, model_input_size, interpolation=cv2.INTER_AREA)
-    #    roi_rgb = cv2.cvtColor(roi_resized, cv2.COLOR_BGR2RGB)
-    #    roi_normalized = roi_rgb / 255.0
-    #    roi_expanded = np.expand_dims(roi_normalized, axis=0)
-    #
-    #    # Classify the ROI image
-    #    prediction_prob = model.predict(roi_expanded, verbose=0)[0]
-    #    predicted_class_index = np.argmax(prediction_prob)
-    #    predicted_class_label = class_labels[predicted_class_index]
-    #    predicted_class_prob = prediction_prob[predicted_class_index]
-    #
-    #    # Display prediction
-    #    if predicted_class_prob < 0.8:
-    #        roi_label = 'Undefined'
-    #    else:
-    #        roi_label = f'{predicted_class_label} ({predicted_class_prob:.2f})'
-    #        prediction_img = class_img[predicted_class_label]
-    #
-    #    p_paper, p_rock, p_scissors = (f'{p:.2f}' for p in prediction_prob)
-    #    log_str += f" | Prediction: Rock {p_rock} - Paper {p_paper} - Scissors {p_scissors}"
+    elif is_predicting:
+        # log_str = predictionsMode(log_str)
+        pass
 
     # Moving ROI -----------------------------------------------------------------------------------
     elif is_moving_roi:
@@ -341,15 +365,15 @@ while True:
     if is_predicting and prediction_img:
         # Load prediction image with alpha channel
         foreground = cv2.imread(prediction_img, cv2.IMREAD_UNCHANGED)
-        alpha_channel = foreground[:,:,3]
-        rgb_channels = foreground[:,:,:3]
+        alpha_channel = foreground[:, :, 3]
+        rgb_channels = foreground[:, :, :3]
 
         # Fill background with prediction color
         background = np.ones_like(rgb_channels, dtype=np.uint8) * roi_clr_prediction
 
         # Alpha factor
-        alpha_factor = alpha_channel[:,:,np.newaxis].astype(np.float32) / 255.0
-        alpha_factor = np.concatenate((alpha_factor,alpha_factor,alpha_factor), axis=2)
+        alpha_factor = alpha_channel[:, :, np.newaxis].astype(np.float32) / 255.0
+        alpha_factor = np.concatenate((alpha_factor, alpha_factor, alpha_factor), axis=2)
 
         # Add foreground imager to background
         base = rgb_channels.astype(np.float32) * alpha_factor
@@ -358,7 +382,8 @@ while True:
 
         # Resize and display prediction image
         final_image = cv2.resize(final_image, prediction_img_size, interpolation=cv2.INTER_AREA)
-        frame[roi_y+roi_h-prediction_img_size[1]:roi_y+roi_h, roi_x+roi_w-prediction_img_size[0]:roi_x+roi_w] = final_image
+        frame[roi_y + roi_h - prediction_img_size[1]:roi_y + roi_h,
+        roi_x + roi_w - prediction_img_size[0]:roi_x + roi_w] = final_image
 
     # Show help ------------------------------------------------------------------------------------
     if show_help:
@@ -391,7 +416,8 @@ while True:
         # display FPS top-right
         cv2.rectangle(frame, (fps_x, fps_y), (fps_x + fps_w, fps_y + fps_h), (0, 0, 0), -1)
         position = fps_x + 10, fps_y + 20
-        cv2.putText(frame, f"FPS: {fps_value}", position, log_font, log_scale, log_clr_text, log_thickness, cv2.LINE_AA)
+        cv2.putText(frame, f"FPS: {fps_value}", position, log_font, log_scale, log_clr_text, log_thickness,
+                    cv2.LINE_AA)
 
     # Display the frame
     cv2.imshow(window_name, frame)

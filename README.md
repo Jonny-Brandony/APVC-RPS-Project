@@ -39,3 +39,25 @@ For example the game of zero or one (zerinho ou um), or even signs to start, sto
 
 
 https://www.youtube.com/watch?v=mjglZWtWQCg
+
+Notas tiradas na meeting com profs: 
+
+ter cuidado a gerar o dataset 
+
+introduzir muita variaçao nas imagens
+
+ter imagens sem ground truth -> n vale mt a pena
+
+tracking das mãos com o yolo e treinar o yolo
+
+
+Gestos:
+pedra papel tesoura, começar, restart, etc
+
+Relatorio:
+* explicar dificuldades na captura do dataset
+* explicar resultados do yolo
+* precision e recall
+* modelos diferentes do yolo? - nano, small, medium
+* tempo que demora pa classificar (real time considerations)
+* Apresentar bem o problema, dificuldades, dataset, resultados com varios modelos.
