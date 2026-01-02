@@ -61,3 +61,8 @@ Relatorio:
 * modelos diferentes do yolo? - nano, small, medium
 * tempo que demora pa classificar (real time considerations)
 * Apresentar bem o problema, dificuldades, dataset, resultados com varios modelos.
+
+
+## How we labbeled our data
+
+https://www.youtube.com/watch?v=r0RspiLG260

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from keras.preprocessing import image
 from tensorflow.keras.models import load_model
 import logging
+import uuid
 
 # Logger -------------------------------------------------------------------------------------------
 logger = logging.getLogger(__name__)
@@ -161,14 +162,15 @@ def capture_mode(log_str):
     if image_counter < frames_batch:
         if datetime.now() - capture_time_counter > timedelta(milliseconds=capture_delay):
             # assign valid image id and name
-            image_ids = [int(img.replace(img_prefix, "").replace(f".{img_extension}", ""))
-                         for img in os.listdir(img_folder)
-                         if img.startswith(img_prefix) and img.endswith(f".{img_extension}")]
-            if img_next_id in image_ids:
-                # assign next id
-                img_next_id = max(image_ids) + 1
-            filepath = os.path.join(img_folder, f"{img_prefix}{img_next_id}.{img_extension}")
+            #image_ids = [int(img.replace(img_prefix, "").replace(f".{img_extension}", ""))
+            #             for img in os.listdir(img_folder)
+            #             if img.startswith(img_prefix) and img.endswith(f".{img_extension}")]
+            #if img_next_id in image_ids:
+            #    # assign next id
+            #    img_next_id = max(image_ids) + 1
             # Save the ROI image
+            uuid_str = str(uuid.uuid1())
+            filepath = os.path.join(img_folder, f"{img_prefix}_{uuid_str}.{img_extension}")
             if use_threshold and display_threshold:
                 cv2.imwrite(filepath, threshold_roi)
             else:
@@ -177,8 +179,8 @@ def capture_mode(log_str):
 
             capture_window_location = str(roi_x) + "; " + str(roi_y) + "; " + str(roi_x + roi_w) + "; " + str(roi_y+roi_h)
             logger.debug(f"writing with use_threshold , {capture_window_location}")
-            with open(filepath+".txt", "w") as f:
-                f.write(capture_window_location)
+           # with open(filepath+".txt", "w") as f:
+           #     f.write(capture_window_location)
 
             image_counter += 1
             capture_time_counter = datetime.now()
