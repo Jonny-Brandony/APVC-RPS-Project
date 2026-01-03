@@ -57,8 +57,47 @@ HEADING4_HEIGHT = 90
 HEADING5_HEIGHT = 110
 HEADING6_HEIGHT = 130
 
+TEXT_COLOR = (255, 255, 255)
+BG_COLOR = (0, 0, 0)
+BOX_COLOR = (40, 196, 212)
 
-def draw_text_with_transparent_bg(frame, text, org, font=cv2.FONT_HERSHEY_SIMPLEX, scale=0.7, color=(255, 0, 0), thickness=2, bg_color=(0, 0, 0), alpha=0.5):
+
+def draw_custom_bounding_boxes(img, result, game_state, box_padding):
+    if result and result.boxes:
+        # Log detection info
+        log.info(f"draw_custom_bounding_boxes Result={result}")
+        for box in result.boxes:
+            # Adjust bounding box if padding is set
+            xyxy = box.xyxy[0]
+            if box_padding > 0:
+                xyxy[0] = max(0, xyxy[0] - box_padding)  # x1
+                xyxy[1] = max(0, xyxy[1] - box_padding)  # y1
+                xyxy[2] = min(img.shape[1], xyxy[2] + box_padding)  # x2
+                xyxy[3] = min(img.shape[0], xyxy[3] + box_padding)  # y2
+            x1, y1, x2, y2 = xyxy.cpu().numpy()
+            conf = box.conf[0].cpu().numpy()
+            class_id = int(box.cls[0].cpu().numpy())
+            class_name = CLASS_NAMES[class_id]
+            track_id = None
+            if hasattr(box, 'id') and box.id is not None:
+                track_id = int(box.id[0].cpu().numpy())
+            center_x = (x1 + x2) / 2
+            player = 1 if center_x < img.shape[1] / 2 else 2
+            locked_gesture = game_state[f'locked_p{player}']
+            label = f"{class_name} {conf:.2f}"
+            if track_id is not None:
+                label = f"ID:{track_id} {label}"
+            if locked_gesture == class_name and game_state['lock_start_time']:
+                elapsed = time.time() - game_state['lock_start_time']
+                remaining = max(0, game_state['lock_duration'] - elapsed)
+                label += f" Lock:{remaining:.1f}s"
+            # Draw box
+            cv2.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), BOX_COLOR, 2)
+            # Draw label
+            cv2.putText(img, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, BOX_COLOR, 2)
+    return img
+
+def draw_text_with_transparent_bg(frame, text, org, font=cv2.FONT_HERSHEY_SIMPLEX, scale=0.7, color=TEXT_COLOR, thickness=2, bg_color=BG_COLOR, alpha=0.5):
     (text_width, text_height), baseline = cv2.getTextSize(text, font, scale, thickness)
     x, y = org
     # Create overlay for background
@@ -84,7 +123,7 @@ def display_centered_info(frame, text, height=HEADING1_HEIGHT):
     h, w = frame.shape[:2]
     text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
     text_width = text_size[0]
-    x = (w - text_width) // 2
+    x = int((w - text_width) / 2)
     return draw_text_with_transparent_bg(frame, text, (x, height))
 
 
@@ -92,7 +131,7 @@ def display_bottom_centered_info(frame, text, bottom_offset=HEADING1_HEIGHT):
     h, w = frame.shape[:2]
     text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
     text_width = text_size[0]
-    x = (w - text_width) // 2
+    x = int((w - text_width) / 2)
     y = h - bottom_offset
     return draw_text_with_transparent_bg(frame, text, (x, y))
 
@@ -120,6 +159,9 @@ def initialize_model_and_capture():
     # load the custom trained YOLO model
     model = YOLO("model/weights_backup/best.pt")
     cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        log.error("Failed to open webcam.")
+        raise RuntimeError("Webcam not available.")
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
@@ -129,6 +171,8 @@ def initialize_model_and_capture():
 
 
 def process_detections(result, w_img):
+    if result is None or result.boxes is None:
+        return None, None
     detections = result.boxes
     p1_signs = []
     p2_signs = []
@@ -230,7 +274,7 @@ def draw_hud(img, game_state):
     if game_state['lock_start_time']:
         elapsed = time.time() - game_state['lock_start_time']
         remaining = max(0, game_state['lock_duration'] - elapsed)
-        lock_info = f"Locking: P1={game_state['locked_p1'] or 'None'}, P2={game_state['locked_p2'] or 'None'} ({remaining:.1f}s)"
+        lock_info = f"Locking: ({remaining:.1f}s)"
         img = display_bottom_centered_info(img, lock_info, HEADING2_HEIGHT)
     if game_state['locked_p1']:
         img = display_bottom_info(img, game_state['locked_p1'], (10, HEADING1_HEIGHT))
@@ -256,20 +300,34 @@ def main():
     reset_game_state(game_state)
     # Config for plotting detections
     plot_config = {'line_width': 2, 'font_size': 12}
-    results = model(0, stream=True, verbose=False)
-
-    for result in results:
-        img = result.plot(**plot_config)
-        h_img, w_img = img.shape[:2]
-        current_p1, current_p2 = process_detections(result, w_img)
-        update_game_state(current_p1, current_p2, game_state)
-        img = draw_hud(img, game_state)
-        display_img = resize_to_window(img, 'YOLO Predictions', w, h)
-        cv2.imshow('YOLO Predictions', display_img)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cv2.destroyAllWindows()
+    box_padding = 0  # Adjust this to change bounding box size (pixels to expand)
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        log.error("Failed to open webcam for tracking.")
+        return
+    log.info("Starting tracking loop with manual frame capture.")
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                log.warning("Failed to read frame from webcam.")
+                break
+            results = model.track(frame, persist=True, verbose=False)
+            img = frame.copy()  # Default to frame if no results
+            for result in results:
+                img = draw_custom_bounding_boxes(img, result, game_state, box_padding)
+                current_p1, current_p2 = process_detections(result if results else None, img.shape[1])
+                update_game_state(current_p1, current_p2, game_state)
+                img = draw_hud(img, game_state)
+                display_img = resize_to_window(img, 'YOLO Predictions', w, h)
+                cv2.imshow('YOLO Predictions', display_img)
+                key = cv2.waitKey(1)
+                if key & 0xFF == ord('q'):
+                    return
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+        log.info("Tracking loop ended.")
 
 
 if __name__ == "__main__":
