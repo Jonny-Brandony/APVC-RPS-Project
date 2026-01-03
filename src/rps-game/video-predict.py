@@ -57,9 +57,21 @@ HEADING4_HEIGHT = 90
 HEADING5_HEIGHT = 110
 HEADING6_HEIGHT = 130
 
+TEXT_THICKNESS = 1
 TEXT_COLOR = (255, 255, 255)
 BG_COLOR = (0, 0, 0)
 BOX_COLOR = (40, 196, 212)
+
+CLASS_COLORS = {
+    ROCK: (0, 165, 255),    # Orange
+    PAPER: (0, 255, 0),     # Green
+    SCISSOR: (255, 0, 0),   # Blue
+    OK: (0, 255, 255),      # Yellow
+    GUN: (255, 0, 255),     # Magenta
+    RESTART: (255, 255, 0), # Cyan
+    START: (128, 128, 128), # Gray
+    STOP: (0, 0, 255),      # Red
+}
 
 
 def draw_custom_bounding_boxes(img, result, game_state, box_padding):
@@ -84,6 +96,7 @@ def draw_custom_bounding_boxes(img, result, game_state, box_padding):
             center_x = (x1 + x2) / 2
             player = 1 if center_x < img.shape[1] / 2 else 2
             locked_gesture = game_state[f'locked_p{player}']
+            color = CLASS_COLORS.get(class_name, BOX_COLOR)
             label = f"{class_name} {conf:.2f}"
             if track_id is not None:
                 label = f"ID:{track_id} {label}"
@@ -92,12 +105,12 @@ def draw_custom_bounding_boxes(img, result, game_state, box_padding):
                 remaining = max(0, game_state['lock_duration'] - elapsed)
                 label += f" Lock:{remaining:.1f}s"
             # Draw box
-            cv2.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), BOX_COLOR, 2)
+            cv2.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, TEXT_THICKNESS)
             # Draw label
-            cv2.putText(img, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, BOX_COLOR, 2)
+            cv2.putText(img, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, TEXT_THICKNESS)
     return img
 
-def draw_text_with_transparent_bg(frame, text, org, font=cv2.FONT_HERSHEY_SIMPLEX, scale=0.7, color=TEXT_COLOR, thickness=2, bg_color=BG_COLOR, alpha=0.5):
+def draw_text_with_transparent_bg(frame, text, org, font=cv2.FONT_HERSHEY_SIMPLEX, scale=0.7, color=TEXT_COLOR, thickness=TEXT_THICKNESS, bg_color=BG_COLOR, alpha=0.5):
     (text_width, text_height), baseline = cv2.getTextSize(text, font, scale, thickness)
     x, y = org
     # Create overlay for background
@@ -144,7 +157,7 @@ def resize_to_window(img, window_name, original_w, original_h):
         scale = min(win_w / original_w, win_h / original_h)
         new_w = int(original_w * scale)
         new_h = int(original_h * scale)
-        resized_img = cv2.resize(img, (new_w, new_h))
+        resized_img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
         canvas = np.zeros((win_h, win_w, 3), dtype=np.uint8)
         x_offset = (win_w - new_w) // 2
         y_offset = (win_h - new_h) // 2
