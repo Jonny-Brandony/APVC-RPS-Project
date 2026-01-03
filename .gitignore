@@ -3,3 +3,7 @@ data/
 captured/
 .idea/
 *.log
+
+*\__pycache__
+*.png
+*.jpg
