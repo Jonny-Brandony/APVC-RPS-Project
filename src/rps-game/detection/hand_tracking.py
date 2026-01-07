@@ -4,7 +4,6 @@ Handles pending hand tracking, locking, and player assignment.
 """
 import time
 from config import log, OK
-from game_state import start_game
 
 
 def get_pending_hand_lock_state(track_id, game_state):
@@ -13,15 +12,15 @@ def get_pending_hand_lock_state(track_id, game_state):
     
     Args:
         track_id: Tracking ID of the hand
-        game_state: Current game state dictionary
+        game_state: Current game state object
     
     Returns:
         str: Lock state ('none', 'locking', 'locked_ok', 'locked_invalid')
     """
-    if track_id not in game_state['pending_hands']:
+    if track_id not in game_state.pending_hands:
         return 'none'
     
-    hand = game_state['pending_hands'][track_id]
+    hand = game_state.pending_hands[track_id]
     sign = hand['sign']
     locked_sign = hand['locked']
     
@@ -31,7 +30,7 @@ def get_pending_hand_lock_state(track_id, game_state):
     if sign == OK:
         if hand['lock_start_time'] is not None:
             elapsed = time.time() - hand['lock_start_time']
-            if elapsed >= game_state['lock_duration']:
+            if elapsed >= game_state.lock_duration:
                 return 'locked_ok'
             return 'locking'
         return 'locking'
@@ -45,20 +44,20 @@ def get_lock_progress(track_id, game_state):
     
     Args:
         track_id: Tracking ID of the hand
-        game_state: Current game state dictionary
+        game_state: Current game state object
     
     Returns:
         float: Progress percentage (0.0 to 100.0)
     """
-    if track_id not in game_state['pending_hands']:
+    if track_id not in game_state.pending_hands:
         return 0.0
     
-    hand = game_state['pending_hands'][track_id]
+    hand = game_state.pending_hands[track_id]
     if hand['lock_start_time'] is None:
         return 0.0
     
     elapsed = time.time() - hand['lock_start_time']
-    progress = min(100, (elapsed / game_state['lock_duration']) * 100)
+    progress = min(100, (elapsed / game_state.lock_duration) * 100)
     return progress
 
 
@@ -70,7 +69,7 @@ def update_pending_hand_lock(hand_data, current_sign, current_time, game_state):
         hand_data: Dictionary containing hand tracking data
         current_sign: Currently detected sign
         current_time: Current timestamp
-        game_state: Current game state dictionary
+        game_state: Current game state object
     """
     locked_sign = hand_data['locked']
     
@@ -90,21 +89,21 @@ def update_assigned_players(signs_by_id, game_state):
     
     Args:
         signs_by_id: Dictionary mapping track_id -> sign
-        game_state: Current game state dictionary
+        game_state: Current game state object
     """
-    players = game_state['players']
+    players = game_state.players
     current_time = time.time()
     
     for player_key, player_data in players.items():
-        if player_data['id'] is not None and player_data['id'] in signs_by_id:
-            player_data['last_seen'] = current_time
-            player_data['sign'] = signs_by_id[player_data['id']]
-        elif player_data['id'] is not None:
+        if player_data.id is not None and player_data.id in signs_by_id:
+            player_data.last_seen = current_time
+            player_data.sign = signs_by_id[player_data.id]
+        elif player_data.id is not None:
             # Check for disconnection
-            if current_time - player_data['last_seen'] > game_state['disconnect_timeout']:
+            if current_time - player_data.last_seen > game_state.disconnect_timeout:
                 log.info(f"{player_key} disconnected during detection.")
-                player_data['id'] = None
-                player_data['sign'] = None
+                player_data.id = None
+                player_data.sign = None
 
 
 def update_pending_hands(signs_by_id, game_state):
@@ -113,9 +112,9 @@ def update_pending_hands(signs_by_id, game_state):
     
     Args:
         signs_by_id: Dictionary mapping track_id -> sign
-        game_state: Current game state dictionary
+        game_state: Current game state object
     """
-    pending_hands = game_state['pending_hands']
+    pending_hands = game_state.pending_hands
     current_time = time.time()
     hands_to_remove = []
     
@@ -126,7 +125,7 @@ def update_pending_hands(signs_by_id, game_state):
             update_pending_hand_lock(hand_data, signs_by_id[track_id], current_time, game_state)
         else:
             # Hand not detected, check for timeout
-            if current_time - hand_data['last_seen'] > game_state['disconnect_timeout']:
+            if current_time - hand_data['last_seen'] > game_state.disconnect_timeout:
                 hands_to_remove.append(track_id)
     
     # Remove disconnected hands
@@ -140,13 +139,13 @@ def add_new_detections(signs_by_id, game_state):
     
     Args:
         signs_by_id: Dictionary mapping track_id -> sign
-        game_state: Current game state dictionary
+        game_state: Current game state object
     """
-    players = game_state['players']
-    pending_hands = game_state['pending_hands']
+    players = game_state.players
+    pending_hands = game_state.pending_hands
     current_time = time.time()
     
-    assigned_ids = [p['id'] for p in players.values() if p['id'] is not None]
+    assigned_ids = [p.id for p in players.values() if p.id is not None]
     
     for track_id, sign in signs_by_id.items():
         if track_id not in assigned_ids and track_id not in pending_hands:
@@ -164,13 +163,13 @@ def assign_players_from_locked_hands(game_state):
     Assign IDs from locked OK hands to available player slots.
     
     Args:
-        game_state: Current game state dictionary
+        game_state: Current game state object
     """
-    players = game_state['players']
-    pending_hands = game_state['pending_hands']
+    players = game_state.players
+    pending_hands = game_state.pending_hands
     current_time = time.time()
     
-    available_slots = [k for k, v in players.items() if v['id'] is None]
+    available_slots = [k for k, v in players.items() if v.id is None]
     locked_ok_hands = [
         (track_id, hand) for track_id, hand in pending_hands.items()
         if get_pending_hand_lock_state(track_id, game_state) == 'locked_ok'
@@ -179,10 +178,11 @@ def assign_players_from_locked_hands(game_state):
     for track_id, hand_data in locked_ok_hands:
         if available_slots:
             slot = available_slots.pop(0)
-            players[slot]['id'] = track_id
-            players[slot]['sign'] = hand_data['sign']
-            players[slot]['last_seen'] = current_time
-            players[slot]['ready'] = True
+            player = players[slot]
+            player.id = track_id
+            player.sign = hand_data['sign']
+            player.last_seen = current_time
+            player.ready = True
             del pending_hands[track_id]
             log.info(f"Assigned {slot} to ID {track_id} (locked with OK)")
 
@@ -192,15 +192,15 @@ def check_transition_to_game(game_state):
     Check if both players are assigned and transition to game phase.
     
     Args:
-        game_state: Current game state dictionary
+        game_state: Current game state object
     """
-    players = game_state['players']
+    players = game_state.players
     
-    if all(p['id'] is not None for p in players.values()):
-        game_state['phase'] = 'game'
-        game_state['pending_hands'] = {}
+    if all(p.id is not None for p in players.values()):
+        game_state.phase = 'game'
+        game_state.pending_hands = {}
         log.info("Both players assigned. Starting game phase.")
-        start_game(game_state)
+        game_state.start_game()
 
 
 def update_player_detection(signs_by_id, game_state):
@@ -209,7 +209,7 @@ def update_player_detection(signs_by_id, game_state):
     
     Args:
         signs_by_id: Dictionary mapping track_id -> sign
-        game_state: Current game state dictionary
+        game_state: Current game state object
     """
     update_assigned_players(signs_by_id, game_state)
     update_pending_hands(signs_by_id, game_state)

@@ -4,7 +4,7 @@ Handles the main game loop and coordinates all modules.
 """
 import cv2
 from config import log, WINDOW_NAME
-from game_state import create_initial_state, reset_game_state
+from game_state import GameState
 from detection.yolo_handler import initialize_model_and_capture, process_detections
 from detection.hand_tracking import update_player_detection
 from game.phases import update_game_phase
@@ -13,11 +13,34 @@ from ui.hud import draw_hud
 from ui.display import resize_to_window
 
 
+def handle_keyboard_input(key, game_state):
+    """
+    Handle keyboard input and perform corresponding actions.
+    
+    Args:
+        key: Key code from cv2.waitKey()
+        game_state: Current game state object
+    
+    Returns:
+        bool: True if the application should continue, False if it should quit
+    """
+    key_char = key & 0xFF
+    
+    if key_char == ord('q'):
+        log.info("Quit key pressed. Exiting application.")
+        return False
+    elif key_char == ord('r'):
+        log.info("Reset key pressed. Resetting game state.")
+        game_state.reset_game_state()
+    
+    return True
+
+
 def main():
     """Main game loop."""
     # Initialize model and capture
     model, w, h = initialize_model_and_capture()
-    game_state = create_initial_state()
+    game_state = GameState()
     
     # Configuration
     box_padding = 0  # Adjust this to change bounding box size (pixels to expand)
@@ -50,7 +73,7 @@ def main():
                 signs_by_id = process_detections(result, img.shape[1])
                 
                 # Update game state based on phase
-                if game_state['phase'] == 'detection':
+                if game_state.phase == 'detection':
                     update_player_detection(signs_by_id, game_state)
                 else:
                     update_game_phase(signs_by_id, game_state)
@@ -62,10 +85,11 @@ def main():
                 display_img = resize_to_window(img, WINDOW_NAME, w, h)
                 cv2.imshow(WINDOW_NAME, display_img)
                 
-                # Check for quit
+                # Handle keyboard input
                 key = cv2.waitKey(1)
-                if key & 0xFF == ord('q'):
-                    return
+                if key != -1:  # Only process if a key was pressed
+                    if not handle_keyboard_input(key, game_state):
+                        return
     
     finally:
         cap.release()

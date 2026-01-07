@@ -21,7 +21,7 @@ LOGGING_CONFIG = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'video-predict.log',
+            'filename': 'log/video-predict.log',
             'level': 'DEBUG',
             'formatter': 'detailed'
         }
@@ -79,6 +79,6 @@ CLASS_COLORS = {
 }
 
 # Model configuration
-MODEL_PATH = "model/weights_backup/best.pt"
+MODEL_PATH = "../../model/weights_backup/best.pt"
 WINDOW_NAME = 'YOLO Predictions'
 
