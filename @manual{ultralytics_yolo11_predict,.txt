@@ -1,0 +1,91 @@
+@manual{ultralytics_yolo11_predict,
+  title        = {Model Prediction with Ultralytics YOLO},
+  author       = {Ultralytics},
+  year         = {2025},
+  note         = {Documentation page: Predict mode},
+  url          = {https://docs.ultralytics.com/modes/predict/},
+  organization = {Ultralytics},
+}
+
+@manual{ultralytics_yolo11_track,
+  title        = {Multi-Object Tracking with Ultralytics YOLO},
+  author       = {Ultralytics},
+  year         = {2025},
+  note         = {Documentation page: Track mode},
+  url          = {https://docs.ultralytics.com/modes/track/},
+  organization = {Ultralytics},
+}
+
+@misc{edjeelectronics_train_deploy_yolo,
+  author       = {Evan Juras},
+  title        = {Train-and-Deploy-YOLO-Models},
+  year         = {2024},
+  howpublished = {\url{https://github.com/EdjeElectronics/Train-and-Deploy-YOLO-Models}},
+  note         = {GitHub repository},
+}
+
+@misc{alexdjulin_rockpaperscissorscnn,
+  author       = {Alexandre Donciu{-}Julin},
+  title        = {RockPaperScissorsCNN},
+  year         = {2024},
+  howpublished = {\url{https://github.com/alexdjulin/RockPaperScissorsCNN}},
+  note         = {GitHub repository},
+}
+
+----
+
+@misc{youtube_rps_yolo_video,
+  author       = {YouTube},
+  title        = {Rock, Paper, Scissors Classification Tutorial},
+  year         = {2024},
+  howpublished = {YouTube video},
+  note         = {\url{https://www.youtube.com/watch?v=r0RspiLG260}},
+}
+
+@manual{silabs_rps_image_classification,
+  title        = {Image Classification -- Rock, Paper, Scissors},
+  author       = {Reed, Geoffrey and Silicon Labs},
+  year         = {2023},
+  organization = {Silicon Labs},
+  url          = {https://siliconlabs.github.io/mltk/mltk/tutorials/image_classification.html},
+  note         = {Silicon Labs Machine Learning Toolkit tutorial},
+}
+
+@article{rautaray2015_hand_gesture_hci,
+  author    = {Rautaray, Sushil S. and Agrawal, Anupam},
+  title     = {A Hand Gesture Recognition Technique for Human--Computer Interaction},
+  journal   = {Multimedia Tools and Applications},
+  year      = {2015},
+  volume    = {74},
+  number    = {1},
+  pages     = {1--27},
+  doi       = {10.1007/s11042-013-1501-1},
+  url       = {https://link.springer.com/article/10.1007/s11042-013-1501-1},
+}
+-----
+
+@article{oudah2020_hand_gesture_review,
+  author  = {Oudah, Munir and Al-Naji, Ali and Chahl, Javaan},
+  title   = {Hand Gesture Recognition Based on Computer Vision: A Review of Techniques},
+  journal = {Journal of Imaging},
+  year    = {2020},
+  volume  = {6},
+  number  = {8},
+  pages   = {73},
+  doi     = {10.3390/jimaging6080073},
+  url     = {https://pmc.ncbi.nlm.nih.gov/articles/PMC8321080/},
+}
+
+
+@inproceedings{molchanov2015_hand_gesture_3dcnn,
+  author    = {Molchanov, Pavlo and Gupta, Shalini and Kim, Kihwan and Kautz, Jan},
+  title     = {Hand Gesture Recognition with 3D Convolutional Neural Networks},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  year      = {2015},
+  pages     = {1--7},
+  doi       = {10.1109/CVPRW.2015.7301342},
+  url       = {https://ieeexplore.ieee.org/document/7301342},
+}
+
+
+
