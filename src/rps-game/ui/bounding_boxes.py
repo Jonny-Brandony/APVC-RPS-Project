@@ -43,9 +43,46 @@ def get_lock_progress_for_track(track_id, class_name, game_state):
     return 100.0
 
 
+def draw_progress_bar(img, x, y, progress_percent, bar_length=12, 
+                       font_scale=0.4, color=(255, 255, 255)):
+    """
+    Draw a progress bar with block characters at specified position.
+    
+    Args:
+        img: Image to draw on
+        x: X coordinate for progress bar
+        y: Y coordinate for progress bar
+        progress_percent: Progress percentage (0-100)
+        bar_length: Number of block characters (default: 12)
+        font_scale: Font scale for text (default: 0.4)
+        color: Text color (BGR tuple, default: white)
+    
+    Returns:
+        Modified image
+    """
+    # Calculate how many blocks should be filled
+    filled_blocks = int((progress_percent / 100) * bar_length)
+    
+    # Build progress bar string
+    progress_bar = ""
+    for i in range(bar_length):
+        if i < filled_blocks:
+            progress_bar += "-"  # Filled portion
+        else:
+            progress_bar += " "  # Unfilled portion
+    
+    # Draw the progress bar text
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    thickness = 1
+    
+    cv2.putText(img, progress_bar, (int(x), int(y)), font, font_scale, color, thickness)
+    
+    return img
+
+
 def draw_lock_progress_bar(img, x1, y2, progress_percent):
     """
-    Draw a progress bar with Unicode block characters below the bounding box.
+    Draw a progress bar with block characters below the bounding box.
     
     Args:
         img: Image to draw on
@@ -56,31 +93,9 @@ def draw_lock_progress_bar(img, x1, y2, progress_percent):
     Returns:
         Modified image
     """
-    # Unicode block characters: ░ (light), ▒ (medium), ▓ (dark), █ (full)
-    bar_length = 12  # Number of block characters
     bar_y = int(y2) + 8
     bar_x = int(x1)
-    
-    # Calculate how many blocks should be filled
-    filled_blocks = int((progress_percent / 100) * bar_length)
-    
-    # Build progress bar string
-    progress_bar = ""
-    for i in range(bar_length):
-        if i < filled_blocks:
-            progress_bar += "-"  # Full block for filled portion
-        else:
-            progress_bar += " "  # Light block for unfilled portion
-    
-    # Draw the progress bar text
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 0.4
-    thickness = 1
-    color = (255, 255, 255)  # White color
-    
-    cv2.putText(img, progress_bar, (bar_x, bar_y), font, font_scale, color, thickness)
-    
-    return img
+    return draw_progress_bar(img, bar_x, bar_y, progress_percent)
 
 
 def get_box_color_and_thickness(track_id, class_name, game_state):

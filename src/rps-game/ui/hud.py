@@ -3,10 +3,12 @@ HUD (Heads-Up Display) module.
 Handles drawing of game information overlay.
 """
 import time
+import cv2
 from config import (HEADING1_HEIGHT, HEADING2_HEIGHT, HEADING3_HEIGHT,
                    HEADING4_HEIGHT)
 from ui.display import (display_info, display_centered_info,
                        display_bottom_info, display_bottom_centered_info)
+from ui.bounding_boxes import draw_progress_bar
 
 
 def draw_detection_phase_hud(img, game_state):
@@ -58,13 +60,51 @@ def draw_detection_phase_hud(img, game_state):
     return img
 
 
-def draw_game_phase_hud(img, game_state):
+def draw_timeout_timer(img, timeout_manager):
+    """
+    Draw timeout timer in center bottom of screen.
+    
+    Args:
+        img: Image to draw on
+        timeout_manager: PlayerTimeoutManager instance
+    
+    Returns:
+        Modified image
+    """
+    if not timeout_manager.is_active():
+        return img
+    
+    h_img, w_img = img.shape[:2]
+    remaining_time = timeout_manager.get_remaining_time()
+    progress = timeout_manager.get_progress_percent()
+    
+    # Position: center bottom
+    bar_length = 20
+    bar_y = h_img - HEADING2_HEIGHT
+    bar_x = (w_img - bar_length * 8) // 2  # Approximate width of progress bar
+    
+    # Draw progress bar
+    img = draw_progress_bar(img, bar_x, bar_y, progress, bar_length=bar_length,
+                            font_scale=0.5, color=(0, 0, 255))  # Red color for warning
+    
+    # Draw time remaining text
+    time_text = f"Players not visible: {remaining_time:.1f}s"
+    if timeout_manager.should_show_warning():
+        time_text = f"WARNING: Resetting in {remaining_time:.1f}s"
+    
+    img = display_bottom_centered_info(img, time_text, HEADING1_HEIGHT)
+    
+    return img
+
+
+def draw_game_phase_hud(img, game_state, timeout_manager):
     """
     Draw HUD for game phase.
     
     Args:
         img: Image to draw on
         game_state: Current game state object
+        timeout_manager: PlayerTimeoutManager instance
     
     Returns:
         Modified image
@@ -101,16 +141,20 @@ def draw_game_phase_hud(img, game_state):
             img = display_centered_info(img, game_state.round_result,
                                        HEADING4_HEIGHT)
     
+    # Draw timeout timer if active
+    img = draw_timeout_timer(img, timeout_manager)
+    
     return img
 
 
-def draw_hud(img, game_state):
+def draw_hud(img, game_state, timeout_manager=None):
     """
     Draw the main HUD based on current game phase.
     
     Args:
         img: Image to draw on
         game_state: Current game state object
+        timeout_manager: PlayerTimeoutManager instance (optional)
     
     Returns:
         Modified image
@@ -118,5 +162,5 @@ def draw_hud(img, game_state):
     if game_state.phase == 'detection':
         return draw_detection_phase_hud(img, game_state)
     else:
-        return draw_game_phase_hud(img, game_state)
+        return draw_game_phase_hud(img, game_state, timeout_manager)
 

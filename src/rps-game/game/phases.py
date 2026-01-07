@@ -5,6 +5,7 @@ Handles game phase logic including locking and round processing.
 import time
 from config import log, STOP, PLAYABLE_SIGNS
 from game.rules import get_rps_winner
+from game.player_timeout import PlayerTimeoutManager
 
 
 def check_and_lock(current_p1, current_p2, game_state):
@@ -119,14 +120,41 @@ def reset_locks(game_state):
     game_state.p2.lock_start_time = None
 
 
-def update_game_phase(signs_by_id, game_state):
+def check_player_visibility(signs_by_id, game_state):
+    """
+    Check if players are visible in current detections.
+    
+    Args:
+        signs_by_id: Dictionary mapping track_id -> sign
+        game_state: Current game state object
+    
+    Returns:
+        tuple: (p1_visible, p2_visible)
+    """
+    p1_visible = game_state.p1.id is not None and game_state.p1.id in signs_by_id
+    p2_visible = game_state.p2.id is not None and game_state.p2.id in signs_by_id
+    return p1_visible, p2_visible
+
+
+def update_game_phase(signs_by_id, game_state, timeout_manager):
     """
     Handle game phase logic: update signs, check locks, process rounds.
     
     Args:
         signs_by_id: Dictionary mapping track_id -> sign
         game_state: Current game state object
+        timeout_manager: PlayerTimeoutManager instance
     """
+    # Check player visibility for timeout management
+    p1_visible, p2_visible = check_player_visibility(signs_by_id, game_state)
+    timeout_reached = timeout_manager.update_visibility(p1_visible, p2_visible)
+    
+    if timeout_reached:
+        log.warning("Player timeout reached. Resetting game state.")
+        game_state.reset_game_state()
+        timeout_manager.reset()
+        return
+    
     current_p1, current_p2 = update_player_signs(signs_by_id, game_state)
     
     if current_p1 is None or current_p2 is None:
