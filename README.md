@@ -67,6 +67,10 @@ Relatorio:
 
 https://www.youtube.com/watch?v=r0RspiLG260
 
+## Notes:
+
+Needed to follow this tutorial to get gpu training to work: https://www.digitalocean.com/community/tutorials/yolov8-for-gpu-accelerate-object-detection 
+
 
 # Future notes:
 

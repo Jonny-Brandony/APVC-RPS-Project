@@ -4,7 +4,7 @@ Handles drawing of detection boxes with lock state visualization.
 """
 import cv2
 import time
-from config import CLASS_NAMES, CLASS_COLORS, BOX_COLOR, OK
+from config import CLASS_NAMES, CLASS_COLORS, BOX_COLOR, THUMB_UP
 from detection.hand_tracking import get_pending_hand_lock_state, get_lock_progress
 
 

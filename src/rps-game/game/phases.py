@@ -3,7 +3,7 @@ Game phase management module.
 Handles game phase logic including locking and round processing.
 """
 import time
-from config import log, STOP, PLAYABLE_SIGNS
+from config import log, THUMB_DOWN, PLAYABLE_SIGNS
 from game.rules import get_rps_winner
 from game.player_timeout import PlayerTimeoutManager
 
@@ -94,7 +94,7 @@ def process_locked_round(game_state):
     locked_p1 = game_state.p1.locked
     locked_p2 = game_state.p2.locked
     
-    if locked_p1 == STOP and locked_p2 == STOP:
+    if locked_p1 == THUMB_DOWN and locked_p2 == THUMB_DOWN:
         game_state.reset_game_state()
         log.info("Game stopped by both players showing STOP.")
     elif locked_p1 in PLAYABLE_SIGNS and locked_p2 in PLAYABLE_SIGNS:

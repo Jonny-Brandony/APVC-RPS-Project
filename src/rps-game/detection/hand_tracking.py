@@ -3,7 +3,7 @@ Hand tracking module for detection phase.
 Handles pending hand tracking, locking, and player assignment.
 """
 import time
-from config import log, OK
+from config import log, THUMB_UP
 
 
 def get_pending_hand_lock_state(track_id, game_state):
@@ -27,7 +27,7 @@ def get_pending_hand_lock_state(track_id, game_state):
     if locked_sign is None or sign != locked_sign:
         return 'none'
     
-    if sign == OK:
+    if sign == THUMB_UP:
         if hand['lock_start_time'] is not None:
             elapsed = time.time() - hand['lock_start_time']
             if elapsed >= game_state.lock_duration:

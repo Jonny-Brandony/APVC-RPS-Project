@@ -7,3 +7,5 @@ captured/
 *\__pycache__
 *.png
 *.jpg
+
+!model_backup/**/*

@@ -40,16 +40,16 @@ log = logging.getLogger('myapp')
 
 # Hand sign constants
 GUN = "Gun"
-OK = "Ok"
 PAPER = "Paper"
 RESTART = "Restart"
 ROCK = "Rock"
 SCISSOR = "Scissor"
 START = "Start"
-STOP = "Stop"
+THUMB_DOWN = "THUMB_DOWN"
+THUMB_UP = "Thumb_up"
 
 # Class names from classes.txt (adjust indices if needed)
-CLASS_NAMES = [GUN, OK, PAPER, RESTART, ROCK, SCISSOR, START, STOP]
+CLASS_NAMES = [GUN, PAPER, ROCK, SCISSOR, THUMB_DOWN, THUMB_UP]
 PLAYABLE_SIGNS = [ROCK, PAPER, SCISSOR]
 
 # Display position constants
@@ -71,14 +71,14 @@ CLASS_COLORS = {
     ROCK: (0, 165, 255),    # Orange
     PAPER: (0, 255, 0),     # Green
     SCISSOR: (255, 0, 0),   # Blue
-    OK: (0, 255, 255),      # Yellow
+    THUMB_UP: (0, 255, 255),      # Yellow
     GUN: (255, 0, 255),     # Magenta
     RESTART: (255, 255, 0), # Cyan
     START: (128, 128, 128), # Gray
-    STOP: (0, 0, 255),      # Red
+    THUMB_DOWN: (0, 0, 255),      # Red
 }
 
 # Model configuration
-MODEL_PATH = "../../model/weights_backup/best.pt"
+MODEL_PATH = "../../model_backup/modelv7/weights/best.pt"
 WINDOW_NAME = 'YOLO Predictions'
 
