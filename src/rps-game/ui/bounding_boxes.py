@@ -4,8 +4,9 @@ Handles drawing of detection boxes with lock state visualization.
 """
 import cv2
 import time
-from config import CLASS_NAMES, CLASS_COLORS, BOX_COLOR, THUMB_UP
+from config import CLASS_NAMES, CLASS_COLORS, BOX_COLOR, TEXT_FONT, THUMB_UP
 from detection.hand_tracking import get_pending_hand_lock_state, get_lock_progress
+from game_state import GamePhase, GameState
 
 
 def get_lock_progress_for_track(track_id, class_name, game_state):
@@ -21,12 +22,12 @@ def get_lock_progress_for_track(track_id, class_name, game_state):
     Returns:
         float: Progress percentage (0.0 to 100.0)
     """
-    if game_state.phase == 'detection':
+    if game_state.phase == GamePhase.DETECTION:
         if track_id in game_state.pending_hands:
             return get_lock_progress(track_id, game_state)
         return 100.0  # Not tracking, show 100%
-    
-    elif game_state.phase == 'game':
+
+    elif game_state.phase == GamePhase.GAME:
         # Check if this track_id belongs to a player and is currently locking
         if game_state.p1.id == track_id:
             if game_state.p1.locked == class_name and game_state.p1.lock_start_time:
@@ -69,7 +70,7 @@ def draw_progress_bar(img, x, y, progress_percent, bar_length=12,
         if i < filled_blocks:
             progress_bar += "-"  # Filled portion
         else:
-            progress_bar += " "  # Unfilled portion
+            progress_bar += "_"  # Unfilled portion
     
     # Draw the progress bar text
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -131,7 +132,7 @@ def get_box_color_and_thickness(track_id, class_name, game_state):
     return color, thickness
 
 
-def build_detection_label(class_name, conf, track_id, game_state):
+def build_detection_label(class_name, conf, track_id, game_state: GameState):
     """
     Build label text for a detection box.
     
@@ -147,12 +148,16 @@ def build_detection_label(class_name, conf, track_id, game_state):
     label = f"{class_name} {conf:.2f}"
     
     if track_id is not None:
-        label = f"ID:{track_id} {label}"
-    
+        if game_state.p1.id == track_id:
+            return f"P1 ID:{track_id} {label}"
+        elif game_state.p2.id == track_id:
+            return f"P2 ID:{track_id} {label}"
+        else:
+            return f"ID:{track_id} {label}"
     return label
 
 
-def draw_custom_bounding_boxes(img, result, game_state, box_padding):
+def draw_custom_bounding_boxes(img, result, game_state : GameState, box_padding):
     """
     Draw custom bounding boxes with lock state visualization.
     
@@ -186,23 +191,29 @@ def draw_custom_bounding_boxes(img, result, game_state, box_padding):
         if hasattr(box, 'id') and box.id is not None:
             track_id = int(box.id[0].cpu().numpy())
         
+
+       #if game_state.phase == GamePhase.GAME and game_state.p1.id != track_id and game_state.p2.id != track_id:
+       #    continue  # Skip drawing boxes not belonging to players
+
         # Get color and thickness
         color, thickness = get_box_color_and_thickness(track_id, class_name, game_state)
-        
-        # Build label
-        label = build_detection_label(class_name, conf, track_id, game_state)
         
         # Draw box
         cv2.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, thickness)
         
+        # Build label
+        label = build_detection_label(class_name, conf, track_id, game_state)
         # Draw label
-        cv2.putText(img, label, (int(x1), int(y1) - 10),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+        cv2.putText(img, label, (int(x1), int(y1) - 10),TEXT_FONT, 0.5, color, 1)
         
         # Draw unified lock progress bar (always shown, 100% if not locking)
         if track_id is not None:
             progress = get_lock_progress_for_track(track_id, class_name, game_state)
             draw_lock_progress_bar(img, x1, y2, progress)
+            if track_id == game_state.p1.id:
+                cv2.putText(img, f"SCORE {game_state.p1.score}", (int(x1), int(y2) - 10),  TEXT_FONT, 0.5, color, 1)
+            if track_id == game_state.p2.id:
+                cv2.putText(img, f"SCORE {game_state.p2.score}", (int(x1), int(y2) - 10),  TEXT_FONT, 0.5, color, 1)
     
     return img
 

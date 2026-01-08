@@ -6,42 +6,7 @@ import time
 from config import log, THUMB_DOWN, PLAYABLE_SIGNS
 from game.rules import get_rps_winner
 from game.player_timeout import PlayerTimeoutManager
-
-
-def check_and_lock(current_p1, current_p2, game_state):
-    """
-    Check if both players have locked their gestures.
-    
-    Args:
-        current_p1: Current sign for player 1
-        current_p2: Current sign for player 2
-        game_state: Current game state object
-    
-    Returns:
-        bool: True if both players have locked for the required duration
-    """
-    p1 = game_state.p1
-    p2 = game_state.p2
-    
-    if current_p1 == p1.locked and \
-       current_p2 == p2.locked and \
-       current_p1 is not None and current_p2 is not None:
-        if p1.lock_start_time is None:
-            p1.lock_start_time = time.time()
-            p2.lock_start_time = time.time()
-            log.info(f"Positions locked: P1={current_p1}, P2={current_p2}")
-        
-        elapsed = time.time() - p1.lock_start_time
-        if elapsed >= game_state.lock_duration:
-            return True
-    else:
-        # Reset lock if signs changed
-        p1.locked = current_p1
-        p2.locked = current_p2
-        p1.lock_start_time = None
-        p2.lock_start_time = None
-    
-    return False
+from game_state import GameState
 
 
 def update_player_signs(signs_by_id, game_state):
@@ -107,20 +72,10 @@ def process_locked_round(game_state):
         log.info(f"Round result: {winner}")
 
 
-def reset_locks(game_state):
-    """
-    Reset player locks after processing a round.
-    
-    Args:
-        game_state: Current game state object
-    """
-    game_state.p1.locked = None
-    game_state.p2.locked = None
-    game_state.p1.lock_start_time = None
-    game_state.p2.lock_start_time = None
 
 
-def check_player_visibility(signs_by_id, game_state):
+
+def check_player_visibility(signs_by_id, game_state: GameState):
     """
     Check if players are visible in current detections.
     
@@ -160,12 +115,10 @@ def update_game_phase(signs_by_id, game_state, timeout_manager):
     if current_p1 is None or current_p2 is None:
         return  # Disconnection occurred
     
-    locked = check_and_lock(current_p1, current_p2, game_state)
+    locked = game_state.check_and_lock(current_p1, current_p2)
     
     if locked:
         if game_state.game_active:
             process_locked_round(game_state)
-        reset_locks(game_state)
-    
-    log.debug(f"Current Game State: {game_state}")
-
+        game_state.reset_locks()
+        log.debug(f"Current Game State: {game_state}")

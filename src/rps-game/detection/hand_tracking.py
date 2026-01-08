@@ -4,6 +4,7 @@ Handles pending hand tracking, locking, and player assignment.
 """
 import time
 from config import log, THUMB_UP
+from game_state import GamePhase
 
 
 def get_pending_hand_lock_state(track_id, game_state):
@@ -197,7 +198,7 @@ def check_transition_to_game(game_state):
     players = game_state.players
     
     if all(p.id is not None for p in players.values()):
-        game_state.phase = 'game'
+        game_state.phase = GamePhase.GAME
         game_state.pending_hands = {}
         log.info("Both players assigned. Starting game phase.")
         game_state.start_game()

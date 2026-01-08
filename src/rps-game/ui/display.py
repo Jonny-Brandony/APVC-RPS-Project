@@ -4,11 +4,11 @@ Contains basic text rendering and window management functions.
 """
 import cv2
 import numpy as np
-from config import TEXT_COLOR, TEXT_THICKNESS, BG_COLOR
+from config import TEXT_COLOR, TEXT_SCALE, TEXT_THICKNESS, BG_COLOR
 
 
 def draw_text_with_transparent_bg(frame, text, org, font=cv2.FONT_HERSHEY_SIMPLEX,
-                                   scale=0.7, color=TEXT_COLOR, thickness=TEXT_THICKNESS,
+                                   scale=TEXT_SCALE, color=TEXT_COLOR, thickness=TEXT_THICKNESS,
                                    bg_color=BG_COLOR, alpha=0.5):
     """
     Draw text with a transparent background overlay.

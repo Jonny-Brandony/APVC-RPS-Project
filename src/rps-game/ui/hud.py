@@ -9,7 +9,33 @@ from config import (HEADING1_HEIGHT, HEADING2_HEIGHT, HEADING3_HEIGHT,
 from ui.display import (display_info, display_centered_info,
                        display_bottom_info, display_bottom_centered_info)
 from ui.bounding_boxes import draw_progress_bar
+from game_state import GamePhase, GameState
 
+def draw_help_ui(img, game_state: GameState):
+    """
+    Draw help UI overlay.
+    
+    Args:
+        img: Image to draw on
+    
+    Returns:
+        Modified image
+    """
+    if not game_state.help_ui_visible:
+        return display_bottom_info(img, "Press 'H' for Help", (10, HEADING2_HEIGHT))
+    
+    h_img, w_img = img.shape[:2]
+    help_texts = [
+        "Press 'Q' to quit the game."
+        "Press 'R' to restart the game."
+    ]
+    
+    y_offset = HEADING2_HEIGHT
+    for text in help_texts:
+        img = display_bottom_info(img, text, (10, y_offset))
+        y_offset += 30
+    
+    return img
 
 def draw_detection_phase_hud(img, game_state):
     """
@@ -30,22 +56,11 @@ def draw_detection_phase_hud(img, game_state):
     
     # Show assigned players
     y_offset = HEADING2_HEIGHT
-    img = display_info(img, "Assigned Players:", (10, y_offset))
-    y_offset += 25
-    
-    for player_key, player_data in players.items():
-        if player_data.id is not None:
-            status = f"🟢 {player_key.upper()}: ID {player_data.id} - {player_data.sign} ✓"
-            img = display_info(img, status, (10, y_offset))
-        else:
-            status = f"⏳ {player_key.upper()}: Waiting..."
-            img = display_info(img, status, (10, y_offset))
-        y_offset += 25
-    
+   
     # Show pending hands
     y_offset += 10
     img = display_info(img, "Pending Hands:", (10, y_offset))
-    y_offset += 25
+    y_offset += 30
     
     for track_id, hand_data in pending_hands.items():
         sign = hand_data['sign']
@@ -54,8 +69,7 @@ def draw_detection_phase_hud(img, game_state):
         y_offset += 25
     
     # Instructions
-    img = display_centered_info(img, "Show OK and hold position to register",
-                               HEADING4_HEIGHT)
+    img = display_bottom_centered_info(img, "Show OK and hold position to register", HEADING1_HEIGHT)
     
     return img
 
@@ -118,24 +132,15 @@ def draw_game_phase_hud(img, game_state, timeout_manager):
                                    HEADING1_HEIGHT)
     else:
         elapsed_time = int(time.time() - game_state.game_start_time)
-        img = display_info(img, f"Player 1: {p1.score}",
+        if p1.id is not None:
+            img = display_info(img, f"Player 1 ID: {p1.id}: {p1.score}",
                           (10, HEADING1_HEIGHT))
-        img = display_info(img, f"Player 2: {p2.score}",
-                          (w_img - 200, HEADING1_HEIGHT))
+        if p2.id is not None:
+            img = display_info(img, f"Player 2 ID: {p2.id}: {p2.score}",
+                          (10, HEADING3_HEIGHT))
         
         img = display_info(img, f"Time: {elapsed_time}s",
                           (w_img//2 - 100, HEADING2_HEIGHT))
-        
-        img = display_info(img, "Player 1", (10, h_img - HEADING3_HEIGHT))
-        img = display_info(img, "Player 2", (w_img - 150, h_img - HEADING3_HEIGHT))
-        
-        # Display player IDs
-        if p1.id is not None:
-            img = display_info(img, f"ID: {p1.id}",
-                              (10, h_img - HEADING2_HEIGHT))
-        if p2.id is not None:
-            img = display_info(img, f"ID: {p2.id}",
-                              (w_img - 150, h_img - HEADING2_HEIGHT))
         
         if game_state.round_result:
             img = display_centered_info(img, game_state.round_result,
@@ -159,7 +164,10 @@ def draw_hud(img, game_state, timeout_manager=None):
     Returns:
         Modified image
     """
-    if game_state.phase == 'detection':
+
+    img = draw_help_ui(img, game_state)
+
+    if game_state.phase == GamePhase.DETECTION:
         return draw_detection_phase_hud(img, game_state)
     else:
         return draw_game_phase_hud(img, game_state, timeout_manager)

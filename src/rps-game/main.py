@@ -4,7 +4,7 @@ Handles the main game loop and coordinates all modules.
 """
 import cv2
 from config import log, WINDOW_NAME
-from game_state import GameState
+from game_state import GamePhase, GameState
 from detection.yolo_handler import initialize_model_and_capture, process_detections
 from detection.hand_tracking import update_player_detection
 from game.phases import update_game_phase
@@ -35,7 +35,10 @@ def handle_keyboard_input(key, game_state, timeout_manager):
         log.info("Reset key pressed. Resetting game state.")
         game_state.reset_game_state()
         timeout_manager.reset()
-    
+    elif key_char == ord('h'):
+        log.info("Help key pressed. Toggling help UI.")
+        game_state.help_ui_visible = not game_state.help_ui_visible
+
     return True
 
 
@@ -77,7 +80,7 @@ def main():
                 signs_by_id = process_detections(result, img.shape[1])
                 
                 # Update game state based on phase
-                if game_state.phase == 'detection':
+                if game_state.phase == GamePhase.DETECTION:
                     update_player_detection(signs_by_id, game_state)
                 else:
                     update_game_phase(signs_by_id, game_state, timeout_manager)

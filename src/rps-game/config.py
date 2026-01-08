@@ -4,6 +4,7 @@ Contains constants, class names, colors, and logging configuration.
 """
 import logging
 import logging.config
+import cv2
 
 # Logging configuration
 LOGGING_CONFIG = {
@@ -54,28 +55,28 @@ PLAYABLE_SIGNS = [ROCK, PAPER, SCISSOR]
 
 # Display position constants
 HEADING1_HEIGHT = 30
-HEADING2_HEIGHT = 50
-HEADING3_HEIGHT = 70
-HEADING4_HEIGHT = 90
-HEADING5_HEIGHT = 110
-HEADING6_HEIGHT = 130
+HEADING2_HEIGHT = 60
+HEADING3_HEIGHT = 90
+HEADING4_HEIGHT = 110
+HEADING5_HEIGHT = 140
+HEADING6_HEIGHT = 170
 
 # Text display constants
 TEXT_THICKNESS = 1
+TEXT_SCALE = 0.5
 TEXT_COLOR = (255, 255, 255)
+TEXT_FONT = cv2.FONT_HERSHEY_SIMPLEX
 BG_COLOR = (0, 0, 0)
 BOX_COLOR = (40, 196, 212)
 
 # Class colors for bounding boxes
 CLASS_COLORS = {
-    ROCK: (0, 165, 255),    # Orange
-    PAPER: (0, 255, 0),     # Green
-    SCISSOR: (255, 0, 0),   # Blue
-    THUMB_UP: (0, 255, 255),      # Yellow
     GUN: (255, 0, 255),     # Magenta
-    RESTART: (255, 255, 0), # Cyan
-    START: (128, 128, 128), # Gray
+    PAPER: (0, 255, 0),     # Green
+    ROCK: (0, 165, 255),    # Orange
+    SCISSOR: (255, 160, 0),   # Blue
     THUMB_DOWN: (0, 0, 255),      # Red
+    THUMB_UP: (0, 255, 255),      # Yellow
 }
 
 # Model configuration

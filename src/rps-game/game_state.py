@@ -2,9 +2,13 @@
 Game state management module.
 Handles initialization and reset of game state.
 """
+import enum
 import time
 from config import log
 
+class GamePhase(enum.Enum):
+    DETECTION = 'detection'
+    GAME = 'game'
 
 class GameState():
     """Class to manage the state of the RPS game."""
@@ -14,10 +18,11 @@ class GameState():
         self.lock_duration = 2.0
         self.round_result = ""
         self.game_active = False
-        self.phase = 'detection'  # 'detection' or 'game'
+        self.phase = GamePhase.DETECTION  # 'detection' or 'game'
         self.pending_hands = {}  # Temporary tracking for unassigned hands
         self.ready_duration = 2.0  # Time to hold OK to lock
         self.disconnect_timeout = 120.0  # 2 minutes
+        self.help_ui_visible = False
         self.p1 = Player()
         self.p2 = Player()
         
@@ -39,7 +44,7 @@ class GameState():
         self.lock_duration = 2.0
         self.round_result = ""
         self.game_active = False
-        self.phase = 'detection'
+        self.phase = GamePhase.DETECTION
 
         # Reset players
         del self.p1
@@ -65,6 +70,52 @@ class GameState():
         self.p2.lock_start_time = None
         self.round_result = ""
 
+    def reset_locks(self):
+        """
+        Reset player locks after processing a round.
+        
+        Args:
+            game_state: Current game state object
+        """
+        self.p1.locked = None
+        self.p2.locked = None
+        self.p1.lock_start_time = None
+        self.p2.lock_start_time = None
+
+    def check_and_lock(self,current_p1, current_p2):
+        """
+        Check if both players have locked their gestures.
+        
+        Args:
+            current_p1: Current sign for player 1
+            current_p2: Current sign for player 2
+            game_state: Current game state object
+        
+        Returns:
+            bool: True if both players have locked for the required duration
+        """
+        p1 = self.p1
+        p2 = self.p2
+
+        if current_p1 == p1.locked and \
+        current_p2 == p2.locked and \
+        current_p1 is not None and current_p2 is not None:
+            if p1.lock_start_time is None:
+                p1.lock_start_time = time.time()
+                p2.lock_start_time = time.time()
+                log.info(f"Positions locked: P1={current_p1}, P2={current_p2}")
+            
+            elapsed = time.time() - p1.lock_start_time
+            if elapsed >= self.lock_duration:
+                return True
+        else:
+            # Reset lock if signs changed
+            p1.locked = current_p1
+            p2.locked = current_p2
+            p1.lock_start_time = None
+            p2.lock_start_time = None
+        
+        return False
 
 class Player():
     """Class to represent a player in the RPS game."""
