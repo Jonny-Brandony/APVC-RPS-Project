@@ -149,9 +149,9 @@ def build_detection_label(class_name, conf, track_id, game_state: GameState):
     
     if track_id is not None:
         if game_state.p1.id == track_id:
-            return f"P1 ID:{track_id} {label}"
+            return f"P1 {label}"
         elif game_state.p2.id == track_id:
-            return f"P2 ID:{track_id} {label}"
+            return f"P2 {label}"
         else:
             return f"ID:{track_id} {label}"
     return label

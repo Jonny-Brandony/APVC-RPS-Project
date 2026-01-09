@@ -29,17 +29,17 @@ class PlayerTimeoutManager:
         Returns:
             bool: True if timeout has been reached and reset is needed
         """
-        both_invisible = not p1_visible and not p2_visible
+        one_invisible = not p1_visible or not p2_visible
         
-        if both_invisible:
+        if one_invisible:
             if self.timeout_start_time is None:
                 self.timeout_start_time = time.time()
                 self.warning_shown = False
-                log.info("Both players invisible. Starting timeout timer.")
+                log.info("One player not visible. Starting timeout timer.")
         else:
             # At least one player is visible, reset timer
             if self.timeout_start_time is not None:
-                log.info("At least one player visible. Resetting timeout timer.")
+                log.info("Both players visible. Resetting timeout timer.")
                 self.timeout_start_time = None
                 self.warning_shown = False
         

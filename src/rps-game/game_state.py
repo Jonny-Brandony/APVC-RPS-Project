@@ -41,7 +41,7 @@ class GameState():
         """Reset the game state to initial values."""
         log.debug("Resetting game state.")
         self.game_start_time = time.time()
-        self.lock_duration = 2.0
+        self.lock_duration = 5.0
         self.round_result = ""
         self.game_active = False
         self.phase = GamePhase.DETECTION

@@ -102,7 +102,7 @@ def draw_timeout_timer(img, timeout_manager):
                             font_scale=0.5, color=(0, 0, 255))  # Red color for warning
     
     # Draw time remaining text
-    time_text = f"Players not visible: {remaining_time:.1f}s"
+    time_text = f"Player not visible: {remaining_time:.1f}s"
     if timeout_manager.should_show_warning():
         time_text = f"WARNING: Resetting in {remaining_time:.1f}s"
     
@@ -111,7 +111,7 @@ def draw_timeout_timer(img, timeout_manager):
     return img
 
 
-def draw_game_phase_hud(img, game_state, timeout_manager):
+def draw_game_phase_hud(img, game_state: GameState, timeout_manager):
     """
     Draw HUD for game phase.
     
@@ -141,6 +141,12 @@ def draw_game_phase_hud(img, game_state, timeout_manager):
         
         img = display_info(img, f"Time: {elapsed_time}s",
                           (w_img//2 - 100, HEADING2_HEIGHT))
+        
+        # Display lock timer when players are locking
+        if p1.lock_start_time is not None:
+            elapsed = time.time() - p1.lock_start_time
+            remaining = max(0, game_state.lock_duration - elapsed)
+            img = display_centered_info(img, f"Round: {remaining:.1f}s",HEADING3_HEIGHT)
         
         if game_state.round_result:
             img = display_centered_info(img, game_state.round_result,
