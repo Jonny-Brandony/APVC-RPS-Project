@@ -1,13 +1,13 @@
 # APVC-RPS-Project
 
-This is a repository for the final project of the APVC currecular unit in ISCTE.
+This is a repository for the final project of the APVC curricular unit in ISCTE.
 
 The project consists of a Convolutional neural network that makes predictions on every frame captured by the computer's webcam.
 
 
 ## Overview
 
-The predictions aim to find hand signs of the popular game Rock, Paper, Sccisors.
+The predictions aim to find hand signs of the popular game Rock, Paper, Scissors.
 Since this project is focused on joining AI with elements of gamification we aim to include an immersion first approach.
 By also training our model to find special hand signs designed by the team members
 
@@ -23,7 +23,7 @@ It will store your relative scores according to the Rock paper scissors gun game
 
 ## Dataset
 
-Found this dataset but it lacks bouding boxes for each image
+Found this dataset but it lacks bounding boxes for each image
 Luckily the owner of the dataset shared his code on how he generated the dataset.
 Which we intend to modify to also include the bounding boxes of each hand sign and this way we generate our own dataset.
 
@@ -41,31 +41,7 @@ For example the game of zero or one (zerinho ou um), or even signs to start, sto
 4. Program the game logic around ur initial PoC to detect who wins each round and how many point each side holds
    1. The algorithm will only be focused on two player games, each player being differentiated by being on the left half or the right half of the webcam feed.
 
-
-
 https://www.youtube.com/watch?v=mjglZWtWQCg
-
-Notas tiradas na meeting com profs: 
-
-ter cuidado a gerar o dataset 
-
-introduzir muita variaçao nas imagens
-
-ter imagens sem ground truth -> n vale mt a pena
-
-tracking das mãos com o yolo e treinar o yolo
-
-
-Gestos:
-pedra papel tesoura, começar, restart, etc
-
-Relatorio:
-* explicar dificuldades na captura do dataset
-* explicar resultados do yolo
-* precision e recall
-* modelos diferentes do yolo? - nano, small, medium
-* tempo que demora pa classificar (real time considerations)
-* Apresentar bem o problema, dificuldades, dataset, resultados com varios modelos.
 
 
 ## How we labbeled our data
