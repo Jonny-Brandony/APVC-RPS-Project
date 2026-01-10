@@ -19,7 +19,7 @@ With this we can display a HUD over the webcam image creating a higher sense of 
 We built a live game where the webcam is always predicting your hand sign and checks for two players in the viewing frame.
 It will store your relative scores according to the Rock paper scissors gun game
 
-[Main readme for the Game](src\rps-game\README.md)
+[Main readme for the Game](src/rps-game/README.md)
 
 ## Dataset
 
