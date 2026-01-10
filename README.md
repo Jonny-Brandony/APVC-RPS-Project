@@ -21,6 +21,12 @@ It will store your relative scores according to the Rock paper scissors gun game
 
 [Main readme for the Game](src/rps-game/README.md)
 
+Demo:
+
+[![Watch the video](https://img.youtube.com/vi/dqGe1-ccaAM/0.jpg)](https://www.youtube.com/watch?v=dqGe1-ccaAM)
+
+
+
 ## Dataset
 
 Found this dataset but it lacks bounding boxes for each image
