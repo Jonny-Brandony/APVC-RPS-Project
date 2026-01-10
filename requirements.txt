@@ -9,3 +9,4 @@ label-studio
 torch
 torchvision
 torchaudio
+pytest

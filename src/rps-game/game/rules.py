@@ -2,7 +2,7 @@
 RPS game rules module.
 Contains the logic for determining winners in Rock-Paper-Scissors.
 """
-from config import ROCK, PAPER, SCISSOR
+from config import ROCK, PAPER, SCISSOR, GUN
 
 
 def get_rps_winner(sign1, sign2):
@@ -21,8 +21,9 @@ def get_rps_winner(sign1, sign2):
     
     if (sign1 == ROCK and sign2 == SCISSOR) or \
        (sign1 == PAPER and sign2 == ROCK) or \
-       (sign1 == SCISSOR and sign2 == PAPER):
+       (sign1 == SCISSOR and sign2 == PAPER) or \
+       (sign1 == GUN):
         return 'Player 1 Wins'
-    
+
     return 'Player 2 Wins'
 

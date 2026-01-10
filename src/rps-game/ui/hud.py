@@ -133,24 +133,20 @@ def draw_game_phase_hud(img, game_state: GameState, timeout_manager):
     else:
         elapsed_time = int(time.time() - game_state.game_start_time)
         if p1.id is not None:
-            img = display_info(img, f"Player 1 ID: {p1.id}: {p1.score}",
-                          (10, HEADING1_HEIGHT))
+            img = display_info(img, f"Player 1 ID: {p1.id}: {p1.score}", (10, HEADING1_HEIGHT))
         if p2.id is not None:
-            img = display_info(img, f"Player 2 ID: {p2.id}: {p2.score}",
-                          (10, HEADING3_HEIGHT))
+            img = display_info(img, f"Player 2 ID: {p2.id}: {p2.score}", (10, HEADING3_HEIGHT))
         
-        img = display_info(img, f"Time: {elapsed_time}s",
-                          (w_img//2 - 100, HEADING2_HEIGHT))
+        img = display_info(img, f"Time: {elapsed_time}s", (w_img//2 - 100, HEADING2_HEIGHT))
         
         # Display lock timer when players are locking
         if p1.lock_start_time is not None:
             elapsed = time.time() - p1.lock_start_time
             remaining = max(0, game_state.lock_duration - elapsed)
-            img = display_centered_info(img, f"Round: {remaining:.1f}s",HEADING3_HEIGHT)
+            img = display_centered_info(img, f"Round: {remaining:.1f}s", HEADING3_HEIGHT)
         
         if game_state.round_result:
-            img = display_centered_info(img, game_state.round_result,
-                                       HEADING4_HEIGHT)
+            img = display_centered_info(img, game_state.round_result, HEADING4_HEIGHT)
     
     # Draw timeout timer if active
     img = draw_timeout_timer(img, timeout_manager)

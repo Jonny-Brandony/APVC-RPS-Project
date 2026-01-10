@@ -51,7 +51,7 @@ THUMB_UP = "Thumb_up"
 
 # Class names from classes.txt (adjust indices if needed)
 CLASS_NAMES = [GUN, PAPER, ROCK, SCISSOR, THUMB_DOWN, THUMB_UP]
-PLAYABLE_SIGNS = [ROCK, PAPER, SCISSOR]
+PLAYABLE_SIGNS = [ROCK, PAPER, SCISSOR, GUN]
 
 # Display position constants
 HEADING1_HEIGHT = 30

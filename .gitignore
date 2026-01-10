@@ -8,4 +8,6 @@ captured/
 *.png
 *.jpg
 
+!src/rps-game/log
+
 !model_backup/**/*
