@@ -69,7 +69,7 @@ def draw_detection_phase_hud(img, game_state):
         y_offset += 25
     
     # Instructions
-    img = display_bottom_centered_info(img, "Show OK and hold position to register", HEADING1_HEIGHT)
+    img = display_bottom_centered_info(img, "Show a THUMBS UP and hold position to register", HEADING1_HEIGHT)
     
     return img
 
