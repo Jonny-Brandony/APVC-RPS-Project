@@ -15,6 +15,8 @@ By also training our model to find special hand signs designed by the team membe
 Besides the model we will also program game logic around the main loop to store who wins each round of Rock paper scissors and who is winning overall.
 With this we can display a HUD over the webcam image creating a higher sense of immersion for the players.
 
+[Final report of the academic project](APVC_G4_RPS_REPORT.pdf)
+
 ## The Game
 We built a live game where the webcam is always predicting your hand sign and checks for two players in the viewing frame.
 It will store your relative scores according to the Rock paper scissors gun game
