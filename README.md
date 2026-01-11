@@ -22,7 +22,10 @@ It will store your relative scores according to the Rock paper scissors gun game
 [Main readme for the Game](src/rps-game/README.md)
 
 Demo:
+Version 1.0 demo
+[![Watch the video](https://img.youtube.com/vi/5xVqWNhR5iI/1.jpg)](https://www.youtube.com/watch?v=5xVqWNhR5iI)
 
+Alpha demo of the app
 [![Watch the video](https://img.youtube.com/vi/dqGe1-ccaAM/0.jpg)](https://www.youtube.com/watch?v=dqGe1-ccaAM)
 
 
